@@ -45,35 +45,7 @@ if ! [ -z "${MACOS_CERTIFICATE_NAME-}" ]; then
   # codesign --sign "$MACOS_CERTIFICATE_NAME" --force --timestamp --identifier net.imput.helium --options restrict,library,runtime,kill --entitlements $APP_ENTITLEMENTS --requirements '=designated => identifier "net.imput.helium" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = '"$PROD_MACOS_NOTARIZATION_TEAM_ID" out/Default/*.dylib
 
   # Verify the binary signature
-  codesign --verify --deep --verbose=4 out/Default/Helium.app
-
-  # Pepare app notarization
-  ditto -c -k --keepParent "out/Default/Helium.app" "$TMPDIR/notarize.zip"
-
-  # Notarize the app
-  CUSTOM_KEYCHAIN_ARG=""
-
-  if ! [ -z "${CI-}" ]; then
-    CUSTOM_KEYCHAIN_ARG="--keychain=~/Library/Keychains/build.keychain-db"
-  fi
-
-  xcrun notarytool \
-    store-credentials "notarytool-profile" \
-    --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" \
-    --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" \
-    --password "$PROD_MACOS_NOTARIZATION_PWD" \
-    $CUSTOM_KEYCHAIN_ARG
-
-  xcrun notarytool \
-    submit "$TMPDIR/notarize.zip" \
-    --keychain-profile "notarytool-profile" \
-    --wait \
-    $CUSTOM_KEYCHAIN_ARG
-
-  xcrun stapler \
-    staple "out/Default/Helium.app"
-
-  rm "$TMPDIR/notarize.zip"
+  codesign --verify --deep --verbose=4 out/Default/Helium.app 
 
   # Clean up entitlements if needed
   if ! [ -z "${PROD_MACOS_SPECIAL_ENTITLEMENTS_PROFILE_PATH-}" ]; then
